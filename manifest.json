@@ -1,0 +1,21 @@
+{
+  "name": "PymeFlow Retail",
+  "short_name": "PymeFlow",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#EAEDED",
+  "theme_color": "#131921",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "icon-512.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ]
+}
