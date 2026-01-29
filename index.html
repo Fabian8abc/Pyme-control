@@ -2,23 +2,19 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <!-- viewport-fit=cover es CLAVE para que ocupe toda la pantalla en iPhone -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>PymeFlow Retail</title>
     
-    <!-- Configuración PWA Simplificada -->
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#131921">
     <meta name="apple-mobile-web-app-capable" content="yes">
+    <!-- black-translucent hace que la barra de estado flote sobre tu app -->
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <!-- AQUI ESTÁ EL CAMBIO: Ahora busca icon.png -->
     <link rel="apple-touch-icon" href="icon.png">
 
-    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
-
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
 
     <script>
@@ -26,9 +22,7 @@
             darkMode: 'class',
             theme: {
                 extend: {
-                    fontFamily: {
-                        sans: ['Noto Sans', 'sans-serif'],
-                    },
+                    fontFamily: { sans: ['Noto Sans', 'sans-serif'] },
                     colors: {
                         amazon: {
                             dark: '#131921',
@@ -41,50 +35,74 @@
                             price: '#B12704'
                         }
                     },
-                    boxShadow: {
-                        'card': '0 1px 3px 0 rgba(0,0,0,0.1), 0 1px 2px 0 rgba(0,0,0,0.06)',
-                    }
+                    boxShadow: { 'card': '0 1px 3px 0 rgba(0,0,0,0.1), 0 1px 2px 0 rgba(0,0,0,0.06)' }
                 }
             }
         }
     </script>
 
     <style>
-        body { font-family: 'Noto Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
+        /* REGLAS PARA SENTIRSE NATIVA */
+        html, body {
+            height: 100%;
+            overflow: hidden; /* Evita scroll en el body principal */
+            overscroll-behavior: none; /* MATA EL REBOTE ELÁSTICO */
+            -webkit-user-select: none; /* Evita seleccionar texto al tocar */
+            user-select: none;
+            -webkit-tap-highlight-color: transparent; /* Quita el flash azul al tocar */
+            font-family: 'Noto Sans', sans-serif;
+        }
+
+        /* Solo permitimos seleccionar texto donde se escribe */
+        input, textarea {
+            -webkit-user-select: text;
+            user-select: text;
+        }
+
+        /* Scroll oculto pero funcional */
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        /* Áreas seguras para iPhone (Notch y barra inferior) */
+        .pt-safe { padding-top: env(safe-area-inset-top); }
         .pb-safe { padding-bottom: env(safe-area-inset-bottom, 20px); }
-        .btn-press:active { transform: scale(0.98); filter: brightness(0.95); }
+
+        /* Animación de pulsación más "app" */
+        .btn-press:active { transform: scale(0.96); transition: transform 0.1s; }
+        
+        /* Ajuste de inputs para evitar zoom en iOS */
+        input, select, textarea { font-size: 16px !important; }
     </style>
 </head>
-<body class="bg-amazon-gray text-slate-900 dark:bg-slate-900 dark:text-white transition-colors duration-300">
+<body class="bg-amazon-dark text-slate-900 dark:bg-slate-900 dark:text-white transition-colors duration-300">
 
-    <div id="app" class="flex flex-col h-screen max-w-md mx-auto bg-amazon-gray dark:bg-slate-950 shadow-2xl overflow-hidden relative border-x border-gray-300 dark:border-slate-800">
+    <!-- App Container: Ocupa 100% y maneja el safe area superior -->
+    <div id="app" class="flex flex-col h-full w-full max-w-md mx-auto bg-amazon-gray dark:bg-slate-950 shadow-2xl overflow-hidden relative border-x border-gray-300 dark:border-slate-800">
         
-        <!-- Header -->
-        <header class="bg-amazon-dark sticky top-0 z-20 px-4 py-3 flex justify-between items-center shadow-md">
-            <div class="flex items-center gap-2">
+        <!-- Header: Ahora tiene padding-top dinámico para el Notch -->
+        <header class="bg-amazon-dark sticky top-0 z-30 px-4 pb-3 pt-safe w-full flex justify-between items-center shadow-md">
+            <div class="flex items-center gap-2 mt-2"> <!-- mt-2 extra para separar del notch -->
                 <div class="flex flex-col relative top-1">
                     <span class="text-white font-bold text-xl tracking-tighter leading-none">PymeFlow</span>
                     <div class="h-1 w-8 bg-amazon-orange rounded-br-full rounded-bl-full ml-1"></div>
                 </div>
             </div>
-            <div class="flex gap-3 items-center">
-                <button onclick="toggleTheme()" class="text-white hover:text-amazon-yellow transition-colors">
+            <div class="flex gap-4 items-center mt-2">
+                <button onclick="toggleTheme()" class="text-white hover:text-amazon-yellow transition-colors btn-press">
                     <i data-lucide="moon" class="w-6 h-6 dark:hidden"></i>
                     <i data-lucide="sun" class="w-6 h-6 hidden dark:block"></i>
                 </button>
-                <button onclick="backupData()" class="text-white hover:text-amazon-yellow transition-colors relative" title="Guardar Respaldo">
+                <button onclick="backupData()" class="text-white hover:text-amazon-yellow transition-colors relative btn-press" title="Guardar Respaldo">
                     <i data-lucide="save" class="w-6 h-6"></i>
                 </button>
             </div>
         </header>
 
         <!-- Search Bar -->
-        <div id="global-search" class="bg-amazon-light px-4 py-3 hidden">
+        <div id="global-search" class="bg-amazon-light px-4 py-3 hidden z-20">
             <div class="relative flex items-center">
                 <input type="text" id="pos-search" placeholder="Buscar en inventario..." 
-                    class="w-full h-10 rounded-md pl-3 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-amazon-orange shadow-inner text-black"
+                    class="w-full h-10 rounded-md pl-3 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-amazon-orange shadow-inner text-black border-none"
                     oninput="filterPOS(this.value)">
                 <div class="absolute right-0 top-0 h-10 w-10 bg-amazon-orange rounded-r-md flex items-center justify-center cursor-pointer">
                     <i data-lucide="search" class="w-5 h-5 text-slate-900"></i>
@@ -92,24 +110,24 @@
             </div>
         </div>
 
-        <!-- Main Content -->
-        <main id="main-content" class="flex-1 overflow-y-auto p-4 pb-24 no-scrollbar"></main>
+        <!-- Main Content: Scroll elástico desactivado aquí también -->
+        <main id="main-content" class="flex-1 overflow-y-auto p-4 pb-24 no-scrollbar overscroll-none bg-amazon-gray dark:bg-slate-950"></main>
 
         <!-- Nav -->
         <nav class="bg-white dark:bg-amazon-light border-t border-gray-200 dark:border-slate-800 px-4 py-2 pb-safe absolute bottom-0 w-full z-20 flex justify-between items-center text-xs">
-            <button onclick="router('dashboard')" class="nav-btn group flex flex-col items-center gap-1 text-slate-500 dark:text-slate-400 hover:text-amazon-light dark:hover:text-white w-16" data-target="dashboard">
+            <button onclick="router('dashboard')" class="nav-btn group flex flex-col items-center gap-1 text-slate-500 dark:text-slate-400 hover:text-amazon-light dark:hover:text-white w-16 btn-press" data-target="dashboard">
                 <div class="relative"><i data-lucide="home" class="w-6 h-6 group-[.active]:text-amazon-blue dark:group-[.active]:text-amazon-yellow"></i><div class="h-1 w-full bg-amazon-blue dark:bg-amazon-yellow absolute -top-3 hidden group-[.active]:block rounded-b-md"></div></div>
                 <span class="font-medium group-[.active]:text-amazon-dark dark:group-[.active]:text-white">Inicio</span>
             </button>
-            <button onclick="router('pos')" class="nav-btn group flex flex-col items-center gap-1 text-slate-500 dark:text-slate-400 hover:text-amazon-light dark:hover:text-white w-16" data-target="pos">
+            <button onclick="router('pos')" class="nav-btn group flex flex-col items-center gap-1 text-slate-500 dark:text-slate-400 hover:text-amazon-light dark:hover:text-white w-16 btn-press" data-target="pos">
                 <div class="relative"><i data-lucide="shopping-cart" class="w-6 h-6 group-[.active]:text-amazon-blue dark:group-[.active]:text-amazon-yellow"></i><div class="h-1 w-full bg-amazon-blue dark:bg-amazon-yellow absolute -top-3 hidden group-[.active]:block rounded-b-md"></div></div>
                 <span class="font-medium group-[.active]:text-amazon-dark dark:group-[.active]:text-white">Caja</span>
             </button>
-            <button onclick="router('inventory')" class="nav-btn group flex flex-col items-center gap-1 text-slate-500 dark:text-slate-400 hover:text-amazon-light dark:hover:text-white w-16" data-target="inventory">
+            <button onclick="router('inventory')" class="nav-btn group flex flex-col items-center gap-1 text-slate-500 dark:text-slate-400 hover:text-amazon-light dark:hover:text-white w-16 btn-press" data-target="inventory">
                 <div class="relative"><i data-lucide="package" class="w-6 h-6 group-[.active]:text-amazon-blue dark:group-[.active]:text-amazon-yellow"></i><div class="h-1 w-full bg-amazon-blue dark:bg-amazon-yellow absolute -top-3 hidden group-[.active]:block rounded-b-md"></div></div>
                 <span class="font-medium group-[.active]:text-amazon-dark dark:group-[.active]:text-white">Stock</span>
             </button>
-            <button onclick="router('finance')" class="nav-btn group flex flex-col items-center gap-1 text-slate-500 dark:text-slate-400 hover:text-amazon-light dark:hover:text-white w-16" data-target="finance">
+            <button onclick="router('finance')" class="nav-btn group flex flex-col items-center gap-1 text-slate-500 dark:text-slate-400 hover:text-amazon-light dark:hover:text-white w-16 btn-press" data-target="finance">
                 <div class="relative"><i data-lucide="users" class="w-6 h-6 group-[.active]:text-amazon-blue dark:group-[.active]:text-amazon-yellow"></i><div class="h-1 w-full bg-amazon-blue dark:bg-amazon-yellow absolute -top-3 hidden group-[.active]:block rounded-b-md"></div></div>
                 <span class="font-medium group-[.active]:text-amazon-dark dark:group-[.active]:text-white">Deudas</span>
             </button>
@@ -117,29 +135,20 @@
 
         <!-- Modals -->
         <div id="modal-overlay" class="fixed inset-0 bg-black/70 backdrop-blur-[2px] z-50 hidden opacity-0 transition-opacity duration-300 flex items-end sm:items-center justify-center">
-            <div id="modal-content" class="bg-white dark:bg-slate-900 w-full max-w-sm sm:rounded-lg rounded-t-xl shadow-2xl transform translate-y-full sm:translate-y-0 transition-transform duration-300 flex flex-col max-h-[90vh]"></div>
+            <div id="modal-content" class="bg-white dark:bg-slate-900 w-full max-w-md sm:rounded-lg rounded-t-2xl shadow-2xl transform translate-y-full sm:translate-y-0 transition-transform duration-300 flex flex-col max-h-[90vh]"></div>
         </div>
     </div>
 
     <!-- JS Logic -->
     <script>
-        // --- PWA REGISTRATION ---
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./service-worker.js')
-                    .then(reg => console.log('SW registrado:', reg.scope))
-                    .catch(err => console.log('SW falló:', err));
-            });
-        }
-
-        // --- STATE & DATA ---
+        if ('serviceWorker' in navigator) { window.addEventListener('load', () => { navigator.serviceWorker.register('./service-worker.js').catch(err => console.log('SW falló:', err)); }); }
+        
         let state = { view: 'dashboard', products: [], clients: [], suppliers: [], sales: [], cart: [], cartClient: null, lastBackup: Date.now() };
         const initialData = {
             products: [{ id: 1, name: 'Coca Cola 600ml', cost: 12, price: 18, stock: 45, minStock: 10, category: 'Bebidas' }, { id: 2, name: 'Sabritas Sal', cost: 14, price: 22, stock: 8, minStock: 12, category: 'Botanas' }],
             clients: [{ id: 1, name: 'Juan Pérez', phone: '5512345678', debt: 150 }],
             suppliers: [{ id: 1, name: 'Distribuidora Central', phone: '5588776655', debt: 5000 }]
         };
-
         const formatMoney = (amount) => new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(amount);
 
         function init() {
@@ -168,7 +177,6 @@
             lucide.createIcons();
         }
 
-        // --- RENDERERS ---
         function renderDashboard(c) {
             const today = state.sales.filter(s => new Date(s.date).toDateString() === new Date().toDateString()).reduce((a, s) => a + s.total, 0);
             const debt = state.clients.reduce((a, c) => a + c.debt, 0);
@@ -189,7 +197,7 @@
 
         function renderPOS(c) {
             c.innerHTML = `<div id="pos-grid" class="grid grid-cols-1 gap-3 pb-24">${renderProductCards(state.products)}</div>
-                <div id="cart-float" class="fixed bottom-[70px] left-0 right-0 bg-white/95 dark:bg-amazon-light/95 border-t dark:border-slate-700 p-3 shadow-lg transform translate-y-[150%] flex justify-between transition-transform duration-300 max-w-md mx-auto">
+                <div id="cart-float" class="fixed bottom-[70px] left-0 right-0 bg-white/95 dark:bg-amazon-light/95 border-t dark:border-slate-700 p-3 shadow-lg transform translate-y-[150%] flex justify-between transition-transform duration-300 max-w-md mx-auto z-20">
                     <div class="flex flex-col"><span class="text-xs text-slate-500">Total (<span id="cart-count">0</span>):</span><span id="cart-total" class="font-bold text-xl text-amazon-price">$0.00</span></div>
                     <button onclick="openCheckout()" class="bg-amazon-yellow text-slate-900 px-8 py-2 rounded-full font-bold shadow-sm border border-yellow-500 btn-press">Pagar</button>
                 </div>`;
@@ -199,24 +207,24 @@
         function renderProductCards(prods) {
             if(prods.length === 0) return '<div class="text-center text-slate-400 py-10">Sin resultados.</div>';
             return prods.map(p => `
-                <div class="bg-white dark:bg-amazon-light p-3 rounded border border-gray-200 dark:border-slate-700 flex gap-3">
+                <div class="bg-white dark:bg-amazon-light p-3 rounded border border-gray-200 dark:border-slate-700 flex gap-3 btn-press" onclick="addToCart(${p.id})">
                     <div class="w-20 h-20 bg-gray-100 dark:bg-slate-800 rounded flex items-center justify-center shrink-0"><i data-lucide="image" class="text-gray-300"></i></div>
                     <div class="flex-1 flex flex-col justify-between">
                         <div><h4 class="font-medium leading-tight line-clamp-2">${p.name}</h4><div class="text-xs text-slate-500 mt-1">${p.category||'General'}</div></div>
-                        <div class="flex justify-between items-end mt-2"><div class="flex flex-col"><span class="text-lg font-medium text-amazon-price">${formatMoney(p.price)}</span><span class="text-[10px] text-slate-500">Stock: ${p.stock}</span></div><button onclick="addToCart(${p.id})" class="bg-amazon-yellow text-slate-900 px-3 py-1.5 rounded-full text-xs font-bold border border-yellow-500 btn-press">Agregar</button></div>
+                        <div class="flex justify-between items-end mt-2"><div class="flex flex-col"><span class="text-lg font-medium text-amazon-price">${formatMoney(p.price)}</span><span class="text-[10px] text-slate-500">Stock: ${p.stock}</span></div><button class="bg-amazon-yellow text-slate-900 px-3 py-1.5 rounded-full text-xs font-bold border border-yellow-500">Agregar</button></div>
                     </div>
                 </div>`).join('');
         }
 
         function renderInventory(c) {
             c.innerHTML = `<div class="flex justify-between items-center mb-4"><h2 class="text-xl font-bold">Inventario</h2><button onclick="openProductModal()" class="text-sm font-bold text-amazon-blue hover:underline">Agregar producto</button></div>
-                <div class="bg-white dark:bg-amazon-light border dark:border-slate-700 rounded divide-y dark:divide-slate-700">${state.products.map(p=>`<div class="p-4 flex flex-col gap-2"><div class="flex justify-between"><span class="font-bold text-amazon-blue" onclick="editProduct(${p.id})">${p.name}</span><span class="font-bold text-amazon-price">${formatMoney(p.price)}</span></div><div class="flex justify-between text-xs text-slate-500"><span>Costo: ${formatMoney(p.cost)}</span><span>Stock: ${p.stock}</span></div><div class="flex gap-2 mt-1"><button onclick="editProduct(${p.id})" class="border rounded px-3 py-1 text-xs">Editar</button><button onclick="deleteProduct(${p.id})" class="border rounded px-3 py-1 text-xs text-red-600">Borrar</button></div></div>`).join('')}</div>`;
+                <div class="bg-white dark:bg-amazon-light border dark:border-slate-700 rounded divide-y dark:divide-slate-700">${state.products.map(p=>`<div class="p-4 flex flex-col gap-2"><div class="flex justify-between"><span class="font-bold text-amazon-blue" onclick="editProduct(${p.id})">${p.name}</span><span class="font-bold text-amazon-price">${formatMoney(p.price)}</span></div><div class="flex justify-between text-xs text-slate-500"><span>Costo: ${formatMoney(p.cost)}</span><span>Stock: ${p.stock}</span></div><div class="flex gap-2 mt-1"><button onclick="editProduct(${p.id})" class="border rounded px-3 py-1 text-xs btn-press">Editar</button><button onclick="deleteProduct(${p.id})" class="border rounded px-3 py-1 text-xs text-red-600 btn-press">Borrar</button></div></div>`).join('')}</div>`;
         }
 
         function renderFinance(c) {
             const isCl = c.dataset.tab !== 'suppliers'; const list = isCl ? state.clients : state.suppliers;
             c.innerHTML = `<h2 class="text-xl font-bold mb-4">Finanzas</h2><div class="flex border-b mb-4 text-sm"><button onclick="switchFinanceTab(true)" class="px-4 py-2 border-b-2 ${isCl?'border-amazon-orange font-bold':'border-transparent'}">Clientes</button><button onclick="switchFinanceTab(false)" class="px-4 py-2 border-b-2 ${!isCl?'border-amazon-orange font-bold':'border-transparent'}">Proveedores</button></div>
-                <div class="space-y-3"><button onclick="openPartnerModal('${isCl?'client':'supplier'}')" class="w-full py-2 border border-dashed rounded text-sm">+ Nuevo</button>${list.map(p=>`<div class="bg-white dark:bg-amazon-light p-4 rounded border shadow-sm"><div class="flex justify-between"><div><h3 class="font-bold text-amazon-blue">${p.name}</h3><div class="text-xs text-slate-500 mt-1 flex gap-3"><a href="tel:${p.phone}">Llamar</a><a href="https://wa.me/52${p.phone}">Whats</a></div></div><div class="text-right"><div class="text-xs">Saldo</div><div class="text-lg font-bold ${p.debt>0?'text-amazon-price':'text-green-600'}">${formatMoney(p.debt)}</div></div></div>${p.debt>0?`<div class="mt-3 flex gap-2"><button onclick="settleDebt(${p.id},'${isCl?'client':'supplier'}',false)" class="flex-1 bg-amazon-yellow text-xs font-bold py-1.5 rounded-full border border-yellow-500">Abonar</button><button onclick="settleDebt(${p.id},'${isCl?'client':'supplier'}',true)" class="px-4 border text-xs font-medium py-1.5 rounded-full">Liquidar</button></div>`:''}</div>`).join('')}</div>`;
+                <div class="space-y-3"><button onclick="openPartnerModal('${isCl?'client':'supplier'}')" class="w-full py-2 border border-dashed rounded text-sm btn-press">+ Nuevo</button>${list.map(p=>`<div class="bg-white dark:bg-amazon-light p-4 rounded border shadow-sm"><div class="flex justify-between"><div><h3 class="font-bold text-amazon-blue">${p.name}</h3><div class="text-xs text-slate-500 mt-1 flex gap-3"><a href="tel:${p.phone}">Llamar</a><a href="https://wa.me/52${p.phone}">Whats</a></div></div><div class="text-right"><div class="text-xs">Saldo</div><div class="text-lg font-bold ${p.debt>0?'text-amazon-price':'text-green-600'}">${formatMoney(p.debt)}</div></div></div>${p.debt>0?`<div class="mt-3 flex gap-2"><button onclick="settleDebt(${p.id},'${isCl?'client':'supplier'}',false)" class="flex-1 bg-amazon-yellow text-xs font-bold py-1.5 rounded-full border border-yellow-500 btn-press">Abonar</button><button onclick="settleDebt(${p.id},'${isCl?'client':'supplier'}',true)" class="px-4 border text-xs font-medium py-1.5 rounded-full btn-press">Liquidar</button></div>`:''}</div>`).join('')}</div>`;
             c.dataset.tab = isCl?'clients':'suppliers';
         }
 
@@ -232,9 +240,9 @@
         }
         function openCheckout() {
             const tot = state.cart.reduce((a,i)=>a+(i.price*i.quantity),0);
-            showModal(`<div class="bg-amazon-light p-4 text-white flex justify-between"><h3 class="font-bold">Pedido</h3><button onclick="closeModal()">X</button></div>
+            showModal(`<div class="bg-amazon-light p-4 text-white flex justify-between rounded-t-2xl sticky top-0 z-10"><h3 class="font-bold">Pedido</h3><button onclick="closeModal()">X</button></div>
                 <div class="p-4 space-y-3 flex-1 overflow-y-auto">${state.cart.map(i=>`<div class="flex gap-2 justify-between border-b pb-2"><div><div class="font-bold text-sm text-amazon-blue">${i.name}</div><input type="number" value="${i.price}" onchange="updateCartPrice(${i.id},this.value)" class="w-16 border rounded text-right text-xs p-1"></div><div class="flex items-center gap-2"><button onclick="updateQty(${i.id},-1)" class="px-2 bg-gray-200 rounded">-</button><span class="text-sm font-bold">${i.quantity}</span><button onclick="updateQty(${i.id},1)" class="px-2 bg-gray-200 rounded">+</button></div></div>`).join('')}</div>
-                <div class="p-4 border-t"><select id="checkout-client" class="w-full mb-3 border p-2 rounded text-sm"><option value="">Cliente Mostrador</option>${state.clients.map(c=>`<option value="${c.id}">${c.name}</option>`).join('')}</select><div class="flex justify-between text-lg font-bold mb-3"><span>Total:</span><span class="text-amazon-price">${formatMoney(tot)}</span></div><button onclick="processSale('cash')" class="w-full bg-amazon-yellow py-3 rounded font-bold border border-yellow-500 mb-2">Efectivo</button><button onclick="processSale('credit')" class="w-full border py-3 rounded font-bold">Crédito</button></div>`, true);
+                <div class="p-4 border-t sticky bottom-0 bg-white dark:bg-amazon-light"><select id="checkout-client" class="w-full mb-3 border p-2 rounded text-sm"><option value="">Cliente Mostrador</option>${state.clients.map(c=>`<option value="${c.id}">${c.name}</option>`).join('')}</select><div class="flex justify-between text-lg font-bold mb-3"><span>Total:</span><span class="text-amazon-price">${formatMoney(tot)}</span></div><button onclick="processSale('cash')" class="w-full bg-amazon-yellow py-3 rounded font-bold border border-yellow-500 mb-2 btn-press">Efectivo</button><button onclick="processSale('credit')" class="w-full border py-3 rounded font-bold btn-press">Crédito</button></div>`, true);
         }
         function updateCartPrice(id, v) { const i = state.cart.find(c=>c.id===id); if(i) i.price=parseFloat(v)||0; openCheckout(); }
         function updateQty(id, d) { const i = state.cart.find(c=>c.id===id); if(i) { i.quantity+=d; if(i.quantity<=0) state.cart=state.cart.filter(c=>c.id!==id); if(state.cart.length===0) closeModal(); else openCheckout(); updateCartUI(); } }
@@ -248,15 +256,15 @@
         }
 
         // --- HELPERS ---
-        function showModal(h, fh) { const o=document.getElementById('modal-overlay'), c=document.getElementById('modal-content'); c.innerHTML=h; o.classList.remove('hidden','opacity-0'); c.classList.remove('translate-y-full'); if(fh) c.classList.add('h-[85vh]'); else c.classList.remove('h-[85vh]'); }
+        function showModal(h, fh) { const o=document.getElementById('modal-overlay'), c=document.getElementById('modal-content'); c.innerHTML=h; o.classList.remove('hidden','opacity-0'); c.classList.remove('translate-y-full'); if(fh) c.classList.add('h-[90vh]'); else c.classList.remove('h-[90vh]'); }
         function closeModal() { document.getElementById('modal-overlay').classList.add('opacity-0'); document.getElementById('modal-content').classList.add('translate-y-full'); setTimeout(()=>document.getElementById('modal-overlay').classList.add('hidden'),300); }
         function showToast(m,t) { const el=document.createElement('div'); el.className=`fixed top-16 left-1/2 -translate-x-1/2 px-4 py-2 rounded shadow-lg text-sm font-bold z-50 bg-white border-l-4 ${t==='error'?'border-red-500':'border-green-500'}`; el.innerText=m; document.body.appendChild(el); setTimeout(()=>el.remove(),3000); }
-        function openProductModal(p) { const d=p||{name:'',cost:'',price:'',stock:'',minStock:5,category:''}; showModal(`<div class="p-6 h-full flex flex-col"><h3 class="font-bold mb-4">${p?'Editar':'Nuevo'}</h3><form onsubmit="saveProduct(event,${p?d.id:null})" class="space-y-3 flex-1 overflow-y-auto"><input class="w-full border p-2 rounded" name="name" value="${d.name}" placeholder="Nombre" required><input class="w-full border p-2 rounded" name="category" value="${d.category}" placeholder="Categoría"><div class="grid grid-cols-2 gap-2"><input type="number" step="0.5" class="border p-2 rounded" name="cost" value="${d.cost}" placeholder="Costo"><input type="number" step="0.5" class="border p-2 rounded" name="price" value="${d.price}" placeholder="Precio"></div><div class="grid grid-cols-2 gap-2"><input type="number" class="border p-2 rounded" name="stock" value="${d.stock}" placeholder="Stock"><input type="number" class="border p-2 rounded" name="minStock" value="${d.minStock}" placeholder="Mínimo"></div><button class="w-full bg-amazon-yellow py-3 rounded font-bold border border-yellow-500 mt-4">Guardar</button></form></div>`); }
+        function openProductModal(p) { const d=p||{name:'',cost:'',price:'',stock:'',minStock:5,category:''}; showModal(`<div class="p-6 h-full flex flex-col"><h3 class="font-bold mb-4">${p?'Editar':'Nuevo'}</h3><form onsubmit="saveProduct(event,${p?d.id:null})" class="space-y-3 flex-1 overflow-y-auto"><input class="w-full border p-2 rounded" name="name" value="${d.name}" placeholder="Nombre" required><input class="w-full border p-2 rounded" name="category" value="${d.category}" placeholder="Categoría"><div class="grid grid-cols-2 gap-2"><input type="number" step="0.5" class="border p-2 rounded" name="cost" value="${d.cost}" placeholder="Costo"><input type="number" step="0.5" class="border p-2 rounded" name="price" value="${d.price}" placeholder="Precio"></div><div class="grid grid-cols-2 gap-2"><input type="number" class="border p-2 rounded" name="stock" value="${d.stock}" placeholder="Stock"><input type="number" class="border p-2 rounded" name="minStock" value="${d.minStock}" placeholder="Mínimo"></div><button class="w-full bg-amazon-yellow py-3 rounded font-bold border border-yellow-500 mt-4 btn-press">Guardar</button></form></div>`); }
         function saveProduct(e,id) { e.preventDefault(); const f=e.target; const it={id:id||Date.now(), name:f.name.value, category:f.category.value, cost:parseFloat(f.cost.value), price:parseFloat(f.price.value), stock:parseInt(f.stock.value), minStock:parseInt(f.minStock.value)}; if(id) state.products[state.products.findIndex(p=>p.id===id)]=it; else state.products.push(it); saveData(); closeModal(); renderInventory(document.getElementById('main-content')); }
         function editProduct(id) { openProductModal(state.products.find(p=>p.id===id)); }
         function deleteProduct(id) { if(confirm('¿Borrar?')) { state.products=state.products.filter(p=>p.id!==id); saveData(); renderInventory(document.getElementById('main-content')); } }
         function switchFinanceTab(cl) { const c=document.getElementById('main-content'); c.dataset.tab=cl?'clients':'suppliers'; renderFinance(c); }
-        function openPartnerModal(t) { showModal(`<div class="p-6"><h3 class="font-bold mb-4">Contacto</h3><form onsubmit="savePartner(event,'${t}')" class="space-y-3"><input name="name" class="w-full border p-2 rounded" placeholder="Nombre" required><input name="phone" class="w-full border p-2 rounded" placeholder="Teléfono" required><input name="debt" type="number" class="w-full border p-2 rounded" placeholder="Deuda Inicial" value="0"><button class="w-full bg-amazon-yellow py-2 rounded font-bold border border-yellow-500 mt-2">Guardar</button></form></div>`); }
+        function openPartnerModal(t) { showModal(`<div class="p-6"><h3 class="font-bold mb-4">Contacto</h3><form onsubmit="savePartner(event,'${t}')" class="space-y-3"><input name="name" class="w-full border p-2 rounded" placeholder="Nombre" required><input name="phone" class="w-full border p-2 rounded" placeholder="Teléfono" required><input name="debt" type="number" class="w-full border p-2 rounded" placeholder="Deuda Inicial" value="0"><button class="w-full bg-amazon-yellow py-2 rounded font-bold border border-yellow-500 mt-2 btn-press">Guardar</button></form></div>`); }
         function savePartner(e,t) { e.preventDefault(); const f=e.target; const p={id:Date.now(), name:f.name.value, phone:f.phone.value, debt:parseFloat(f.debt.value)||0}; if(t==='client') state.clients.push(p); else state.suppliers.push(p); saveData(); closeModal(); renderFinance(document.getElementById('main-content')); }
         function settleDebt(id,t,f) { const l=t==='client'?state.clients:state.suppliers; const p=l.find(x=>x.id===id); if(f) { if(confirm('¿Liquidar?')) p.debt=0; } else { const v=parseFloat(prompt('Abono:')); if(v) p.debt=Math.max(0,p.debt-v); } saveData(); renderFinance(document.getElementById('main-content')); }
         document.getElementById('modal-overlay').addEventListener('click', e=>{if(e.target.id==='modal-overlay')closeModal()});
