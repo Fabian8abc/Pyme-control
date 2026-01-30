@@ -2,8 +2,8 @@ const CACHE_NAME = 'pymeflow-v1';
 const ASSETS_TO_CACHE = [
   './index.html',
   './manifest.json',
-  './icon-192.png',
-  './icon-512.png',
+  './icon.png',
+  './icon.png',
   'https://cdn.tailwindcss.com',
   'https://unpkg.com/lucide@latest',
   'https://fonts.googleapis.com/css2?family=Noto+Sans:wght@300;400;600;700&display=swap'
@@ -42,4 +42,5 @@ self.addEventListener('activate', (event) => {
       );
     })
   );
+
 });
