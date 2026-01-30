@@ -2,14 +2,12 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <!-- viewport-fit=cover es CLAVE para que ocupe toda la pantalla en iPhone -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>PymeFlow Retail</title>
     
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#131921">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <!-- black-translucent hace que la barra de estado flote sobre tu app -->
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link rel="apple-touch-icon" href="icon.png">
 
@@ -42,52 +40,42 @@
     </script>
 
     <style>
-        /* REGLAS PARA SENTIRSE NATIVA */
         html, body {
             height: 100%;
-            overflow: hidden; /* Evita scroll en el body principal */
-            overscroll-behavior: none; /* MATA EL REBOTE ELÁSTICO */
-            -webkit-user-select: none; /* Evita seleccionar texto al tocar */
+            overflow: hidden; 
+            overscroll-behavior: none; 
+            -webkit-user-select: none; 
             user-select: none;
-            -webkit-tap-highlight-color: transparent; /* Quita el flash azul al tocar */
+            -webkit-tap-highlight-color: transparent; 
             font-family: 'Noto Sans', sans-serif;
         }
-
-        /* Solo permitimos seleccionar texto donde se escribe */
-        input, textarea {
-            -webkit-user-select: text;
-            user-select: text;
-        }
-
-        /* Scroll oculto pero funcional */
+        input, textarea { -webkit-user-select: text; user-select: text; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-
-        /* Áreas seguras para iPhone (Notch y barra inferior) */
         .pt-safe { padding-top: env(safe-area-inset-top); }
         .pb-safe { padding-bottom: env(safe-area-inset-bottom, 20px); }
-
-        /* Animación de pulsación más "app" */
         .btn-press:active { transform: scale(0.96); transition: transform 0.1s; }
-        
-        /* Ajuste de inputs para evitar zoom en iOS */
         input, select, textarea { font-size: 16px !important; }
     </style>
 </head>
 <body class="bg-amazon-dark text-slate-900 dark:bg-slate-900 dark:text-white transition-colors duration-300">
 
-    <!-- App Container: Ocupa 100% y maneja el safe area superior -->
     <div id="app" class="flex flex-col h-full w-full max-w-md mx-auto bg-amazon-gray dark:bg-slate-950 shadow-2xl overflow-hidden relative border-x border-gray-300 dark:border-slate-800">
         
-        <!-- Header: Ahora tiene padding-top dinámico para el Notch -->
+        <!-- Header -->
         <header class="bg-amazon-dark sticky top-0 z-30 px-4 pb-3 pt-safe w-full flex justify-between items-center shadow-md">
-            <div class="flex items-center gap-2 mt-2"> <!-- mt-2 extra para separar del notch -->
+            <div class="flex items-center gap-2 mt-2">
                 <div class="flex flex-col relative top-1">
                     <span class="text-white font-bold text-xl tracking-tighter leading-none">PymeFlow</span>
                     <div class="h-1 w-8 bg-amazon-orange rounded-br-full rounded-bl-full ml-1"></div>
                 </div>
             </div>
-            <div class="flex gap-4 items-center mt-2">
+            <div class="flex gap-3 items-center mt-2">
+                <!-- BOTÓN DE INSTALAR (OCULTO POR DEFECTO) -->
+                <button id="install-btn" class="hidden bg-amazon-yellow text-slate-900 px-3 py-1 rounded text-xs font-bold animate-pulse btn-press">
+                    Instalar App
+                </button>
+
                 <button onclick="toggleTheme()" class="text-white hover:text-amazon-yellow transition-colors btn-press">
                     <i data-lucide="moon" class="w-6 h-6 dark:hidden"></i>
                     <i data-lucide="sun" class="w-6 h-6 hidden dark:block"></i>
@@ -110,10 +98,8 @@
             </div>
         </div>
 
-        <!-- Main Content: Scroll elástico desactivado aquí también -->
         <main id="main-content" class="flex-1 overflow-y-auto p-4 pb-24 no-scrollbar overscroll-none bg-amazon-gray dark:bg-slate-950"></main>
 
-        <!-- Nav -->
         <nav class="bg-white dark:bg-amazon-light border-t border-gray-200 dark:border-slate-800 px-4 py-2 pb-safe absolute bottom-0 w-full z-20 flex justify-between items-center text-xs">
             <button onclick="router('dashboard')" class="nav-btn group flex flex-col items-center gap-1 text-slate-500 dark:text-slate-400 hover:text-amazon-light dark:hover:text-white w-16 btn-press" data-target="dashboard">
                 <div class="relative"><i data-lucide="home" class="w-6 h-6 group-[.active]:text-amazon-blue dark:group-[.active]:text-amazon-yellow"></i><div class="h-1 w-full bg-amazon-blue dark:bg-amazon-yellow absolute -top-3 hidden group-[.active]:block rounded-b-md"></div></div>
@@ -133,14 +119,34 @@
             </button>
         </nav>
 
-        <!-- Modals -->
         <div id="modal-overlay" class="fixed inset-0 bg-black/70 backdrop-blur-[2px] z-50 hidden opacity-0 transition-opacity duration-300 flex items-end sm:items-center justify-center">
             <div id="modal-content" class="bg-white dark:bg-slate-900 w-full max-w-md sm:rounded-lg rounded-t-2xl shadow-2xl transform translate-y-full sm:translate-y-0 transition-transform duration-300 flex flex-col max-h-[90vh]"></div>
         </div>
     </div>
 
-    <!-- JS Logic -->
     <script>
+        // --- LOGICA DE INSTALACIÓN ---
+        let deferredPrompt;
+        const installBtn = document.getElementById('install-btn');
+
+        // Escuchar si el navegador dice que la app se puede instalar
+        window.addEventListener('beforeinstallprompt', (e) => {
+            // Evitar que Chrome muestre su barra automáticamente (para controlarlo nosotros)
+            e.preventDefault();
+            deferredPrompt = e;
+            // Mostrar nuestro botón
+            installBtn.classList.remove('hidden');
+        });
+
+        installBtn.addEventListener('click', async () => {
+            if (!deferredPrompt) return;
+            deferredPrompt.prompt(); // Mostrar diálogo nativo
+            const { outcome } = await deferredPrompt.userChoice;
+            console.log(`User response to the install prompt: ${outcome}`);
+            deferredPrompt = null;
+            installBtn.classList.add('hidden'); // Ocultar botón tras elección
+        });
+
         if ('serviceWorker' in navigator) { window.addEventListener('load', () => { navigator.serviceWorker.register('./service-worker.js').catch(err => console.log('SW falló:', err)); }); }
         
         let state = { view: 'dashboard', products: [], clients: [], suppliers: [], sales: [], cart: [], cartClient: null, lastBackup: Date.now() };
