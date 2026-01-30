@@ -174,12 +174,9 @@
             const today = state.sales.filter(s => new Date(s.date).toDateString() === new Date().toDateString());
             const todaySales = today.reduce((a, s) => a + s.total, 0);
             
-            // Calculate Profit (Utilidad)
             let todayCost = 0;
             today.forEach(sale => {
                 sale.items.forEach(item => {
-                    // Try to find current cost, if not use a fallback (imperfect but better than nothing)
-                    // In a real DB we would store cost at moment of sale
                     const product = state.products.find(p => p.id === item.id);
                     const cost = product ? product.cost : (item.price * 0.7); 
                     todayCost += (cost * item.quantity);
@@ -279,13 +276,44 @@
 
         function renderInventory(c) {
             c.innerHTML = `<div class="flex justify-between items-center mb-4"><h2 class="text-xl font-bold">Inventario</h2><button onclick="openProductModal()" class="text-sm font-bold text-amazon-blue hover:underline">Agregar producto</button></div>
-                <div class="bg-white dark:bg-amazon-light border dark:border-slate-700 rounded divide-y dark:divide-slate-700">${state.products.map(p=>`<div class="p-4 flex flex-col gap-2"><div class="flex justify-between"><span class="font-bold text-amazon-blue" onclick="editProduct(${p.id})">${p.name}</span><span class="font-bold text-amazon-price">${formatMoney(p.price)}</span></div><div class="flex justify-between text-xs text-slate-500"><span>Costo: ${formatMoney(p.cost)}</span><span>Stock: ${p.stock}</span></div><div class="flex gap-2 mt-1"><button onclick="editProduct(${p.id})" class="border rounded px-3 py-1 text-xs btn-press">Editar</button><button onclick="deleteProduct(${p.id})" class="border rounded px-3 py-1 text-xs text-red-600 btn-press">Borrar</button></div></div>`).join('')}</div>`;
+                <div class="bg-white dark:bg-amazon-light border dark:border-slate-700 rounded divide-y dark:divide-slate-700">${state.products.map(p=>`<div class="p-4 flex flex-col gap-2"><div class="flex justify-between"><span class="font-bold text-amazon-blue" onclick="editProduct(${p.id})">${p.name}</span><span class="font-bold text-amazon-price">${formatMoney(p.price)}</span></div><div class="flex justify-between text-xs text-slate-500"><span>Costo: ${formatMoney(p.cost)}</span><span>Stock: ${p.stock}</span></div><div class="flex gap-2 mt-1"><button onclick="editProduct(${p.id})" class="border rounded px-3 py-1 text-xs btn-press bg-gray-50 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-600">Editar</button><button onclick="deleteProduct(${p.id})" class="border rounded px-3 py-1 text-xs text-red-600 btn-press bg-gray-50 dark:bg-slate-800 dark:border-slate-600">Borrar</button></div></div>`).join('')}</div>`;
         }
 
         function renderFinance(c) {
             const isCl = c.dataset.tab !== 'suppliers'; const list = isCl ? state.clients : state.suppliers;
-            c.innerHTML = `<h2 class="text-xl font-bold mb-4">Finanzas</h2><div class="flex border-b mb-4 text-sm"><button onclick="switchFinanceTab(true)" class="px-4 py-2 border-b-2 ${isCl?'border-amazon-orange font-bold':'border-transparent'}">Clientes</button><button onclick="switchFinanceTab(false)" class="px-4 py-2 border-b-2 ${!isCl?'border-amazon-orange font-bold':'border-transparent'}">Proveedores</button></div>
-                <div class="space-y-3"><button onclick="openPartnerModal('${isCl?'client':'supplier'}')" class="w-full py-2 border border-dashed rounded text-sm btn-press">+ Nuevo</button>${list.map(p=>`<div class="bg-white dark:bg-amazon-light p-4 rounded border shadow-sm"><div class="flex justify-between"><div><h3 class="font-bold text-amazon-blue">${p.name}</h3><div class="text-xs text-slate-500 mt-1 flex gap-3"><a href="tel:${p.phone}">Llamar</a><a href="https://wa.me/52${p.phone}">Whats</a></div></div><div class="text-right"><div class="text-xs">Saldo</div><div class="text-lg font-bold ${p.debt>0?'text-amazon-price':'text-green-600'}">${formatMoney(p.debt)}</div></div></div>${p.debt>0?`<div class="mt-3 flex gap-2"><button onclick="settleDebt(${p.id},'${isCl?'client':'supplier'}',false)" class="flex-1 bg-amazon-yellow text-xs font-bold py-1.5 rounded-full border border-yellow-500 btn-press">Abonar</button><button onclick="settleDebt(${p.id},'${isCl?'client':'supplier'}',true)" class="px-4 border text-xs font-medium py-1.5 rounded-full btn-press">Liquidar</button></div>`:''}</div>`).join('')}</div>`;
+            c.innerHTML = `<h2 class="text-xl font-bold mb-4">Finanzas</h2>
+            <div class="flex border-b mb-4 text-sm">
+                <button onclick="switchFinanceTab(true)" class="px-4 py-2 border-b-2 ${isCl?'border-amazon-orange font-bold':'border-transparent'}">Clientes</button>
+                <button onclick="switchFinanceTab(false)" class="px-4 py-2 border-b-2 ${!isCl?'border-amazon-orange font-bold':'border-transparent'}">Proveedores</button>
+            </div>
+            <div class="space-y-3">
+                <button onclick="openPartnerModal('${isCl?'client':'supplier'}')" class="w-full py-2 border border-dashed rounded text-sm btn-press">+ Nuevo</button>
+                ${list.map(p=>`
+                    <div class="bg-white dark:bg-amazon-light p-4 rounded border shadow-sm">
+                        <div class="flex justify-between">
+                            <div>
+                                <h3 class="font-bold text-amazon-blue">${p.name}</h3>
+                                <div class="text-xs text-slate-500 mt-1 flex gap-3 items-center">
+                                    <a href="tel:${p.phone}" class="hover:text-amazon-orange">Llamar</a>
+                                    <a href="https://wa.me/52${p.phone}" class="hover:text-amazon-orange">Whats</a>
+                                    <button onclick="deletePartner(${p.id}, '${isCl?'client':'supplier'}')" class="text-red-400 hover:text-red-600 ml-2 flex items-center gap-1" title="Eliminar">
+                                        <i data-lucide="trash-2" class="w-3 h-3"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <div class="text-xs">Saldo</div>
+                                <div class="text-lg font-bold ${p.debt>0?'text-amazon-price':'text-green-600'}">${formatMoney(p.debt)}</div>
+                            </div>
+                        </div>
+                        ${p.debt>0 ? `
+                        <div class="mt-3 flex gap-2">
+                            <button onclick="settleDebt(${p.id},'${isCl?'client':'supplier'}',false)" class="flex-1 bg-amazon-yellow text-xs font-bold py-1.5 rounded-full border border-yellow-500 btn-press text-slate-900">Abonar</button>
+                            <button onclick="settleDebt(${p.id},'${isCl?'client':'supplier'}',true)" class="px-4 border text-xs font-medium py-1.5 rounded-full btn-press bg-white dark:bg-slate-700 dark:text-white dark:border-slate-500">Liquidar</button>
+                        </div>` : ''}
+                    </div>
+                `).join('')}
+            </div>`;
             c.dataset.tab = isCl?'clients':'suppliers';
         }
 
@@ -302,8 +330,8 @@
         function openCheckout() {
             const tot = state.cart.reduce((a,i)=>a+(i.price*i.quantity),0);
             showModal(`<div class="bg-amazon-light p-4 text-white flex justify-between rounded-t-2xl sticky top-0 z-10"><h3 class="font-bold">Pedido</h3><button onclick="closeModal()">X</button></div>
-                <div class="p-4 space-y-3 flex-1 overflow-y-auto">${state.cart.map(i=>`<div class="flex gap-2 justify-between border-b pb-2"><div><div class="font-bold text-sm text-amazon-blue">${i.name}</div><input type="number" value="${i.price}" onchange="updateCartPrice(${i.id},this.value)" class="w-16 border rounded text-right text-xs p-1"></div><div class="flex items-center gap-2"><button onclick="updateQty(${i.id},-1)" class="px-2 bg-gray-200 rounded">-</button><span class="text-sm font-bold">${i.quantity}</span><button onclick="updateQty(${i.id},1)" class="px-2 bg-gray-200 rounded">+</button></div></div>`).join('')}</div>
-                <div class="p-4 border-t sticky bottom-0 bg-white dark:bg-amazon-light"><select id="checkout-client" class="w-full mb-3 border p-2 rounded text-sm"><option value="">Cliente Mostrador</option>${state.clients.map(c=>`<option value="${c.id}">${c.name}</option>`).join('')}</select><div class="flex justify-between text-lg font-bold mb-3"><span>Total:</span><span class="text-amazon-price">${formatMoney(tot)}</span></div><button onclick="processSale('cash')" class="w-full bg-amazon-yellow py-3 rounded font-bold border border-yellow-500 mb-2 btn-press">Efectivo</button><button onclick="processSale('credit')" class="w-full border py-3 rounded font-bold btn-press">Crédito</button></div>`, true);
+                <div class="p-4 space-y-3 flex-1 overflow-y-auto">${state.cart.map(i=>`<div class="flex gap-2 justify-between border-b dark:border-slate-700 pb-2"><div><div class="font-bold text-sm text-amazon-blue">${i.name}</div><input type="number" value="${i.price}" onchange="updateCartPrice(${i.id},this.value)" class="w-16 border rounded text-right text-xs p-1 bg-white dark:bg-slate-800 dark:text-white dark:border-slate-700"></div><div class="flex items-center gap-2"><button onclick="updateQty(${i.id},-1)" class="px-2 bg-gray-200 dark:bg-slate-700 dark:text-white rounded">-</button><span class="text-sm font-bold dark:text-white">${i.quantity}</span><button onclick="updateQty(${i.id},1)" class="px-2 bg-gray-200 dark:bg-slate-700 dark:text-white rounded">+</button></div></div>`).join('')}</div>
+                <div class="p-4 border-t sticky bottom-0 bg-white dark:bg-amazon-light"><select id="checkout-client" class="w-full mb-3 border p-2 rounded text-sm bg-gray-50 dark:bg-slate-800 dark:text-white dark:border-slate-700"><option value="">Cliente Mostrador</option>${state.clients.map(c=>`<option value="${c.id}">${c.name}</option>`).join('')}</select><div class="flex justify-between text-lg font-bold mb-3"><span>Total:</span><span class="text-amazon-price">${formatMoney(tot)}</span></div><button onclick="processSale('cash')" class="w-full bg-amazon-yellow py-3 rounded font-bold border border-yellow-500 mb-2 btn-press text-slate-900">Efectivo</button><button onclick="processSale('credit')" class="w-full border py-3 rounded font-bold btn-press dark:text-white dark:border-slate-500">Crédito</button></div>`, true);
         }
         function updateCartPrice(id, v) { const i = state.cart.find(c=>c.id===id); if(i) i.price=parseFloat(v)||0; openCheckout(); }
         function updateQty(id, d) { const i = state.cart.find(c=>c.id===id); if(i) { i.quantity+=d; if(i.quantity<=0) state.cart=state.cart.filter(c=>c.id!==id); if(state.cart.length===0) closeModal(); else openCheckout(); updateCartUI(); } }
@@ -378,13 +406,38 @@
         function showModal(h, fh) { const o=document.getElementById('modal-overlay'), c=document.getElementById('modal-content'); c.innerHTML=h; o.classList.remove('hidden','opacity-0'); c.classList.remove('translate-y-full'); if(fh) c.classList.add('h-[90vh]'); else c.classList.remove('h-[90vh]'); }
         function closeModal() { document.getElementById('modal-overlay').classList.add('opacity-0'); document.getElementById('modal-content').classList.add('translate-y-full'); setTimeout(()=>document.getElementById('modal-overlay').classList.add('hidden'),300); }
         function showToast(m,t) { const el=document.createElement('div'); el.className=`fixed top-16 left-1/2 -translate-x-1/2 px-4 py-2 rounded shadow-lg text-sm font-bold z-50 bg-white border-l-4 ${t==='error'?'border-red-500':'border-green-500'}`; el.innerText=m; document.body.appendChild(el); setTimeout(()=>el.remove(),3000); }
-        function openProductModal(p) { const d=p||{name:'',cost:'',price:'',stock:'',minStock:5,category:''}; showModal(`<div class="p-6 h-full flex flex-col"><h3 class="font-bold mb-4">${p?'Editar':'Nuevo'}</h3><form onsubmit="saveProduct(event,${p?d.id:null})" class="space-y-3 flex-1 overflow-y-auto"><input class="w-full border p-2 rounded" name="name" value="${d.name}" placeholder="Nombre" required><input class="w-full border p-2 rounded" name="category" value="${d.category}" placeholder="Categoría"><div class="grid grid-cols-2 gap-2"><input type="number" step="0.5" class="border p-2 rounded" name="cost" value="${d.cost}" placeholder="Costo"><input type="number" step="0.5" class="border p-2 rounded" name="price" value="${d.price}" placeholder="Precio"></div><div class="grid grid-cols-2 gap-2"><input type="number" class="border p-2 rounded" name="stock" value="${d.stock}" placeholder="Stock"><input type="number" class="border p-2 rounded" name="minStock" value="${d.minStock}" placeholder="Mínimo"></div><button class="w-full bg-amazon-yellow py-3 rounded font-bold border border-yellow-500 mt-4 btn-press">Guardar</button></form></div>`); }
+        function openProductModal(p) { const d=p||{name:'',cost:'',price:'',stock:'',minStock:5,category:''}; showModal(`<div class="p-6 h-full flex flex-col"><h3 class="font-bold mb-4 dark:text-white">${p?'Editar':'Nuevo'} Producto</h3><form onsubmit="saveProduct(event,${p?d.id:null})" class="space-y-3 flex-1 overflow-y-auto"><div class="space-y-1"><label class="text-xs font-bold text-slate-500 dark:text-slate-400">Nombre</label><input class="w-full border p-2 rounded bg-gray-50 dark:bg-slate-800 dark:border-slate-700 dark:text-white" name="name" value="${d.name}" placeholder="Ej. Coca Cola" required></div><div class="space-y-1"><label class="text-xs font-bold text-slate-500 dark:text-slate-400">Categoría</label><input class="w-full border p-2 rounded bg-gray-50 dark:bg-slate-800 dark:border-slate-700 dark:text-white" name="category" value="${d.category}" placeholder="Ej. Bebidas"></div><div class="grid grid-cols-2 gap-2"><div class="space-y-1"><label class="text-xs font-bold text-slate-500 dark:text-slate-400">Costo ($)</label><input type="number" step="0.5" class="w-full border p-2 rounded bg-gray-50 dark:bg-slate-800 dark:border-slate-700 dark:text-white" name="cost" value="${d.cost}" placeholder="0.00"></div><div class="space-y-1"><label class="text-xs font-bold text-slate-500 dark:text-slate-400">Venta ($)</label><input type="number" step="0.5" class="w-full border p-2 rounded bg-gray-50 dark:bg-slate-800 dark:border-slate-700 dark:text-white" name="price" value="${d.price}" placeholder="0.00"></div></div><div class="grid grid-cols-2 gap-2"><div class="space-y-1"><label class="text-xs font-bold text-slate-500 dark:text-slate-400">Stock Actual</label><input type="number" class="w-full border p-2 rounded bg-gray-50 dark:bg-slate-800 dark:border-slate-700 dark:text-white" name="stock" value="${d.stock}" placeholder="0"></div><div class="space-y-1"><label class="text-xs font-bold text-slate-500 dark:text-slate-400">Alerta Stock Mínimo</label><input type="number" class="w-full border p-2 rounded bg-gray-50 dark:bg-slate-800 dark:border-slate-700 dark:text-white" name="minStock" value="${d.minStock}" placeholder="5"></div></div><button class="w-full bg-amazon-yellow py-3 rounded font-bold border border-yellow-500 mt-4 btn-press text-slate-900">Guardar</button></form></div>`); }
         function saveProduct(e,id) { e.preventDefault(); const f=e.target; const it={id:id||Date.now(), name:f.name.value, category:f.category.value, cost:parseFloat(f.cost.value), price:parseFloat(f.price.value), stock:parseInt(f.stock.value), minStock:parseInt(f.minStock.value)}; if(id) state.products[state.products.findIndex(p=>p.id===id)]=it; else state.products.push(it); saveData(); closeModal(); renderInventory(document.getElementById('main-content')); }
         function editProduct(id) { openProductModal(state.products.find(p=>p.id===id)); }
         function deleteProduct(id) { if(confirm('¿Borrar?')) { state.products=state.products.filter(p=>p.id!==id); saveData(); renderInventory(document.getElementById('main-content')); } }
         function switchFinanceTab(cl) { const c=document.getElementById('main-content'); c.dataset.tab=cl?'clients':'suppliers'; renderFinance(c); }
-        function openPartnerModal(t) { showModal(`<div class="p-6"><h3 class="font-bold mb-4">Contacto</h3><form onsubmit="savePartner(event,'${t}')" class="space-y-3"><input name="name" class="w-full border p-2 rounded" placeholder="Nombre" required><input name="phone" class="w-full border p-2 rounded" placeholder="Teléfono" required><input name="debt" type="number" class="w-full border p-2 rounded" placeholder="Deuda Inicial" value="0"><button class="w-full bg-amazon-yellow py-2 rounded font-bold border border-yellow-500 mt-2 btn-press">Guardar</button></form></div>`); }
+        function openPartnerModal(t) { showModal(`<div class="p-6"><h3 class="font-bold mb-4 dark:text-white">Nuevo Contacto</h3><form onsubmit="savePartner(event,'${t}')" class="space-y-3"><div class="space-y-1"><label class="text-xs font-bold text-slate-500 dark:text-slate-400">Nombre</label><input name="name" class="w-full border p-2 rounded bg-gray-50 dark:bg-slate-800 dark:border-slate-700 dark:text-white" placeholder="Nombre completo" required></div><div class="space-y-1"><label class="text-xs font-bold text-slate-500 dark:text-slate-400">Teléfono</label><input name="phone" type="tel" class="w-full border p-2 rounded bg-gray-50 dark:bg-slate-800 dark:border-slate-700 dark:text-white" placeholder="10 dígitos" required></div><div class="space-y-1"><label class="text-xs font-bold text-slate-500 dark:text-slate-400">Deuda Inicial</label><input name="debt" type="number" class="w-full border p-2 rounded bg-gray-50 dark:bg-slate-800 dark:border-slate-700 dark:text-white" placeholder="0.00" value="0"></div><button class="w-full bg-amazon-yellow py-2 rounded font-bold border border-yellow-500 mt-2 btn-press text-slate-900">Guardar</button></form></div>`); }
         function savePartner(e,t) { e.preventDefault(); const f=e.target; const p={id:Date.now(), name:f.name.value, phone:f.phone.value, debt:parseFloat(f.debt.value)||0}; if(t==='client') state.clients.push(p); else state.suppliers.push(p); saveData(); closeModal(); renderFinance(document.getElementById('main-content')); }
+        
+        function deletePartner(id, type) {
+            const list = type === 'client' ? state.clients : state.suppliers;
+            const partner = list.find(p => p.id === id);
+            
+            if (!partner) return;
+
+            let confirmMsg = `¿Eliminar a ${partner.name}?`;
+            if (partner.debt > 0) {
+                confirmMsg = `⚠️ ¡CUIDADO! \n${partner.name} tiene un saldo pendiente de ${formatMoney(partner.debt)}. \n\n¿Estás seguro de eliminarlo y borrar la deuda?`;
+            }
+
+            if (confirm(confirmMsg)) {
+                if (type === 'client') {
+                    state.clients = state.clients.filter(p => p.id !== id);
+                } else {
+                    state.suppliers = state.suppliers.filter(p => p.id !== id);
+                }
+                saveData();
+                renderFinance(document.getElementById('main-content'));
+                lucide.createIcons(); // Re-render icons after DOM update
+                showToast("Contacto eliminado");
+            }
+        }
+
         function settleDebt(id,t,f) { const l=t==='client'?state.clients:state.suppliers; const p=l.find(x=>x.id===id); if(f) { if(confirm('¿Liquidar?')) p.debt=0; } else { const v=parseFloat(prompt('Abono:')); if(v) p.debt=Math.max(0,p.debt-v); } saveData(); renderFinance(document.getElementById('main-content')); }
         document.getElementById('modal-overlay').addEventListener('click', e=>{if(e.target.id==='modal-overlay')closeModal()});
 
