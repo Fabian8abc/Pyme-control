@@ -251,6 +251,7 @@
                     `).join('')}
                 </div>
              `;
+             lucide.createIcons(); // Fix: Force icons render in history
         }
 
         function renderPOS(c) {
@@ -315,10 +316,11 @@
                 `).join('')}
             </div>`;
             c.dataset.tab = isCl?'clients':'suppliers';
+            lucide.createIcons(); // Fix: Force icons render in finance always
         }
 
         // --- ACTIONS ---
-        function filterPOS(v) { document.getElementById('pos-grid').innerHTML = renderProductCards(state.products.filter(p=>p.name.toLowerCase().includes(v.toLowerCase()))); }
+        function filterPOS(v) { document.getElementById('pos-grid').innerHTML = renderProductCards(state.products.filter(p=>p.name.toLowerCase().includes(v.toLowerCase()))); lucide.createIcons(); }
         function addToCart(id) { const p = state.products.find(x=>x.id===id); if(!p || p.stock<=0) return showToast('Agotado','error');
             const ex = state.cart.find(c=>c.id===id); if(ex) ex.quantity++; else state.cart.push({...p, quantity:1, originalPrice:p.price});
             updateCartUI(); showToast('Agregado'); }
@@ -433,7 +435,6 @@
                 }
                 saveData();
                 renderFinance(document.getElementById('main-content'));
-                lucide.createIcons(); // Re-render icons after DOM update
                 showToast("Contacto eliminado");
             }
         }
@@ -445,3 +446,4 @@
     </script>
 </body>
 </html>
+
